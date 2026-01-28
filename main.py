@@ -47,22 +47,57 @@ def transmission_attempt(packet):
             print("Target out of range")
             raise BrokenConnectionError("Target is too far away")
 
+def packet_send_smart(entities, packet):
+    path = []
+    current = packet.sender
+    target = packet.receiver
+    while current.distance_from_earth + 150 < target.distance_from_earth:
+        best_candidate = None
+        max_distance = -1
+        for entity in entities:
+            if entity == current:
+                continue
+            if 0 < (entity.distance_from_earth - current.distance_from_earth) <= 150:
+                if entity.distance_from_earth > max_distance:
+                    best_candidate = entity
+                    max_distance = entity.distance_from_earth
+        if best_candidate is None:
+            return "No path found"
+        path.append(best_candidate)
+        current = best_candidate
 
-network = SpaceNetwork(level=5)
+    current = packet.sender
+    for node in reversed(path):
+        packet = RelayPacket(packet, current, node)
+        current = node
+
+    transmission_attempt(packet)
+    return "Message sent successfully"
+
+
+
+network = SpaceNetwork(level=6)
 
 earth=Earth("Earth",0)
 sat1 = Satellite("Sat1", 100)
 sat2 = Satellite("Sat2", 200)
 sat3 = Satellite("set3",300)
 sat4 = Satellite("set4",400)
+entities1 = [earth, sat1, sat2, sat3, sat4]
+
+
+msg = Packet("Hello from Earth!!", earth, sat4)
+
+packet_send_smart(entities1, msg)
+
 #my_packet = Packet("You're going to hit a rock!", sat1, sat2)
 
-sat3_to_sat4 = Packet("Hello from Earth!!", sat3, sat4)
-sat2_to_sat3 = RelayPacket(sat3_to_sat4, sat2, sat3)
-sat1_to_sat2 = RelayPacket(sat2_to_sat3, sat1, sat2)
-earth_to_sat1 = RelayPacket(sat1_to_sat2, earth, sat1)
+#sat3_to_sat4 = Packet("Hello from Earth!!", sat3, sat4)
+#sat2_to_sat3 = RelayPacket(sat3_to_sat4, sat2, sat3)
+#sat1_to_sat2 = RelayPacket(sat2_to_sat3, sat1, sat2)
+#earth_to_sat1 = RelayPacket(sat1_to_sat2, earth, sat1)
 
-try:
-    transmission_attempt(earth_to_sat1)
-except BrokenConnectionError:
-    print("Transmission failed")
+#try:
+    #transmission_attempt(earth_to_sat1)
+#except BrokenConnectionError:
+    #print("Transmission failed")
