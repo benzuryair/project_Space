@@ -48,19 +48,21 @@ def transmission_attempt(packet):
             raise BrokenConnectionError("Target is too far away")
 
 
-network = SpaceNetwork(level=3)
+network = SpaceNetwork(level=5)
 
 earth=Earth("Earth",0)
 sat1 = Satellite("Sat1", 100)
 sat2 = Satellite("Sat2", 200)
-
+sat3 = Satellite("set3",300)
+sat4 = Satellite("set4",400)
 #my_packet = Packet("You're going to hit a rock!", sat1, sat2)
 
-final_p = Packet("Hello from Earth!!", sat1, sat2)
-
-earth_to_sat1_p = RelayPacket(final_p, earth, sat1)
+sat3_to_sat4 = Packet("Hello from Earth!!", sat3, sat4)
+sat2_to_sat3 = RelayPacket(sat3_to_sat4, sat2, sat3)
+sat1_to_sat2 = RelayPacket(sat2_to_sat3, sat1, sat2)
+earth_to_sat1 = RelayPacket(sat1_to_sat2, earth, sat1)
 
 try:
-    transmission_attempt(earth_to_sat1_p)
+    transmission_attempt(earth_to_sat1)
 except BrokenConnectionError:
     print("Transmission failed")
